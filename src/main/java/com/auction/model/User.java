@@ -1,10 +1,10 @@
 package com.auction.model;
 
+import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import jakarta.persistence.*;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -16,21 +16,32 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 50)
-    private String name;
-
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, length = 255)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
+    private String name;
+
+    @Column(length = 255)
+    private String contactInfo;
+
+    @Column(length = 255)
+    private String avatarUrl;
+
+    @Column(nullable = false, length = 50)
     private String role = "USER";
 
-    @Column(nullable = false)
-    private boolean emailConfirmed = false;
+    // конструкторы
+    public User(Long id) {
+        this.id = id;
+    }
 
+    public User() {}
+
+    // перегрузки
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
@@ -56,10 +67,6 @@ public class User implements UserDetails {
         return true;
     }
 
-    @Override
-    public boolean isEnabled() {
-        return emailConfirmed;
-    }
 
     // Getters and setters
     public Long getId() { return id; }
@@ -72,6 +79,4 @@ public class User implements UserDetails {
     public void setPassword(String password) { this.password = password; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
-    public boolean isEmailConfirmed() { return emailConfirmed; }
-    public void setEmailConfirmed(boolean emailConfirmed) { this.emailConfirmed = emailConfirmed; }
 }

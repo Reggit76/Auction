@@ -1,8 +1,8 @@
 package com.auction.controller;
 
-import com.auction.model.Bid;
+import com.auction.dto.BidRequest;
+import com.auction.dto.BidResponse;
 import com.auction.service.BidService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,23 +11,24 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/bids")
 public class BidController {
+    private final BidService bidService;
 
-    @Autowired
-    private BidService bidService;
+    public BidController(BidService bidService) {
+        this.bidService = bidService;
+    }
 
     @PostMapping
-    public ResponseEntity<Bid> placeBid(@RequestBody Bid bid) {
+    public ResponseEntity<?> placeBid(@RequestBody BidRequest bidRequest) {
         try {
-            Bid placedBid = bidService.placeBid(bid);
-            return ResponseEntity.ok(placedBid);
+            BidResponse bid = bidService.placeBid(bidRequest);
+            return ResponseEntity.ok(bid);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @GetMapping("/lot/{lotId}")
-    public ResponseEntity<List<Bid>> getBidsByLot(@PathVariable Long lotId) {
-        List<Bid> bids = bidService.getBidsByLotId(lotId);
-        return ResponseEntity.ok(bids);
+    public ResponseEntity<List<BidResponse>> getBidsByLot(@PathVariable Long lotId) {
+        return ResponseEntity.ok(bidService.getBidsByLotId(lotId));
     }
 }

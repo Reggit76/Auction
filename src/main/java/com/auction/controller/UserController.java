@@ -37,7 +37,6 @@ public class UserController {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Возвращаем данные пользователя после входа
         User authenticatedUser = userService.getUserByEmail(user.getEmail()).orElseThrow();
         return ResponseEntity.ok(authenticatedUser);
     }
@@ -50,4 +49,3 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 }
-

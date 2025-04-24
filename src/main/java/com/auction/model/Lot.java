@@ -11,53 +11,62 @@ public class Lot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User owner;
 
-    @Column(nullable = false)
-    private String name;
+    @Column(nullable = false, length = 255)
+    private String title;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal startingPrice;
 
-    @Column(nullable = false)
-    private BigDecimal currentPrice;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal currentBid;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal minBidStep;
 
     @Column(nullable = false)
-    private LocalDateTime auctionEndTime;
+    private LocalDateTime endTime;
 
-    @Column(nullable = false)
-    private String status = "ACTIVE";
+    @Column(nullable = false, length = 50)
+    private LotStatus status;
 
-    // Getters and setters
+    // Геттеры и сеттеры
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
     public BigDecimal getStartingPrice() { return startingPrice; }
     public void setStartingPrice(BigDecimal startingPrice) { this.startingPrice = startingPrice; }
-    public BigDecimal getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(BigDecimal currentPrice) { this.currentPrice = currentPrice; }
+
+    public BigDecimal getCurrentBid() { return currentBid; }
+    public void setCurrentBid(BigDecimal currentBid) { this.currentBid = currentBid; }
+
     public BigDecimal getMinBidStep() { return minBidStep; }
     public void setMinBidStep(BigDecimal minBidStep) { this.minBidStep = minBidStep; }
-    public LocalDateTime getAuctionEndTime() { return auctionEndTime; }
-    public void setAuctionEndTime(LocalDateTime auctionEndTime) { this.auctionEndTime = auctionEndTime; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+
+    public LotStatus getStatus() { return status; }
+    public void setStatus(LotStatus status) { this.status = status; }
 }

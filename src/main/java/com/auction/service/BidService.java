@@ -1,47 +1,81 @@
 package com.auction.service;
 
+import com.auction.dto.BidRequest;
+import com.auction.dto.BidResponse;
 import com.auction.model.Bid;
 import com.auction.model.Lot;
+import com.auction.model.LotStatus;
+import com.auction.model.User;
 import com.auction.repository.BidRepository;
 import com.auction.repository.LotRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BidService {
-    @Autowired
-    private BidRepository bidRepository;
+    private final BidRepository bidRepository;
+    private final LotRepository lotRepository;
 
-    @Autowired
-    private LotRepository lotRepository;
+    public BidService(BidRepository bidRepository, LotRepository lotRepository) {
+        this.bidRepository = bidRepository;
+        this.lotRepository = lotRepository;
+    }
 
     @Transactional
-    public Bid placeBid(Bid bid) {
-        Lot lot = lotRepository.findById(bid.getLot().getId()).orElseThrow();
-        if (lot.getStatus().equals("ENDED") || lot.getStatus().equals("CANCELLED")) {
-            throw new IllegalStateException("Auction has ended or been cancelled.");
+    public BidResponse placeBid(BidRequest bidRequest) {
+        Lot lot = lotRepository.findById(bidRequest.lotId())
+                .orElseThrow(() -> new IllegalArgumentException("Lot not found"));
+
+        validateBid(lot, bidRequest.userId(), bidRequest.bidAmount());
+
+        Bid bid = new Bid();
+        bid.setLot(lot);
+        bid.setUser(new User(bidRequest.userId()));
+        bid.setBidAmount(bidRequest.bidAmount());
+
+        updateLotPrice(lot, bidRequest.bidAmount());
+        Bid savedBid = bidRepository.save(bid);
+        return convertToDto(savedBid);
+    }
+
+    private void validateBid(Lot lot, Long userId, BigDecimal bidAmount) {
+        if (!lot.getStatus().equals(LotStatus.ACTIVE)) {
+            throw new IllegalStateException("Lot is not active");
         }
-        if (bid.getUser().getId().equals(lot.getOwner().getId())) {
-            throw new IllegalArgumentException("Cannot bid on your own lot.");
+        if (userId.equals(lot.getOwner().getId())) {
+            throw new IllegalArgumentException("Cannot bid on your own lot");
         }
-        if (bid.getBidAmount().compareTo(lot.getCurrentPrice().add(lot.getMinBidStep())) < 0) {
-            throw new IllegalArgumentException("Bid amount too low.");
+        BigDecimal minRequired = lot.getCurrentBid().add(lot.getMinBidStep());
+        if (bidAmount.compareTo(minRequired) < 0) {
+            throw new IllegalArgumentException("Minimum bid required: " + minRequired);
         }
-        lot.setCurrentPrice(bid.getBidAmount());
+    }
+
+    private void updateLotPrice(Lot lot, BigDecimal newPrice) {
+        lot.setCurrentBid(newPrice);
         lotRepository.save(lot);
-        return bidRepository.save(bid);
     }
 
     @Transactional(readOnly = true)
-    public List<Bid> getBidsByLotId(Long lotId) {
+    public List<BidResponse> getBidsByLotId(Long lotId) {
         Lot lot = lotRepository.findById(lotId)
-                .orElseThrow(() -> new EntityNotFoundException("Lot not found"));
-        return bidRepository.findByLotOrderByBidTimeDesc(lot);
+                .orElseThrow(() -> new IllegalArgumentException("Lot not found"));
+        return bidRepository.findByLotOrderByTimestampDesc(lot)
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
-    public List<Bid> getBidsByLot(Lot lot) {
-        return bidRepository.findByLotOrderByBidTimeDesc(lot);
+    private BidResponse convertToDto(Bid bid) {
+        return new BidResponse(
+                bid.getId(),
+                bid.getLot().getId(),
+                bid.getUser().getId(),
+                bid.getBidAmount(),
+                bid.getTimestamp()
+        );
     }
 }

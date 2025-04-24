@@ -1,18 +1,23 @@
 package com.auction.service;
 
 import com.auction.model.Lot;
+import com.auction.model.LotStatus;
 import com.auction.repository.LotRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class LotService {
-    @Autowired
-    private LotRepository lotRepository;
+    private final LotRepository lotRepository;
+
+    public LotService(LotRepository lotRepository) {
+        this.lotRepository = lotRepository;
+    }
 
     public Lot createLot(Lot lot) {
+        lot.setStatus(LotStatus.ACTIVE);
+        lot.setCurrentBid(lot.getStartingPrice());
         return lotRepository.save(lot);
     }
 
@@ -29,6 +34,6 @@ public class LotService {
     }
 
     public List<Lot> getActiveLots() {
-        return lotRepository.findByStatus("ACTIVE");
+        return lotRepository.findByStatus(LotStatus.ACTIVE);
     }
 }
